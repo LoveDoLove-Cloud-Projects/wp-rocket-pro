@@ -22,6 +22,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+$rocket_manual_preload = (bool) get_rocket_option( 'manual_preload', false );
 ?>
 <div id="<?php echo esc_attr( $data['id'] ); ?>" class="wpr-Page">
 	<div class="wpr-sectionHeader">
@@ -41,9 +42,18 @@ defined( 'ABSPATH' ) || exit;
 			<br>
 			<?php esc_html_e( 'Your website should be loading faster now!', 'rocket' ); ?>
 			</h2>
-				<div class="wpr-notice-description"><?php esc_html_e( 'To guarantee fast websites, WP Rocket automatically applies 80% of web performance best practices.', 'rocket' ); ?><br> <?php esc_html_e( 'We also enable options that provide immediate benefits to your website.', 'rocket' ); ?></div>
-				<div class="wpr-notice-continue"><?php esc_html_e( 'Continue to the options to further optimize your site!', 'rocket' ); ?></div>
-				<a id="wpr-congratulations-notice" class="wpr-notice-close wpr-icon-close rocket-dismiss" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=rocket_ignore&box=rocket_activation_notice' ), 'rocket_ignore_rocket_activation_notice' ) ); ?>"><span class="screen-reader-text"><?php esc_html_e( 'Dismiss this notice', 'rocket' ); ?></span></a>
+		<div class="wpr-notice-description"><?php esc_html_e( 'To guarantee fast websites, WP Rocket automatically applies 80% of web performance best practices.', 'rocket' ); ?><br> <?php esc_html_e( 'We also enable options that provide immediate benefits to your website.', 'rocket' ); ?></div>
+			<div class="wpr-notice-continue">
+				<?php
+				printf(
+					// translators: %1$s = opening <strong> tag, %2$s = closing </strong> tag.
+					esc_html__( 'Check the %1$sRocket Insights%2$s tab to track your top pages, quickly spot issues, and get in-depth insights to further optimize your website speed.', 'rocket' ),
+					'<strong>',
+					'</strong>'
+				);
+				?>
+			</div>
+			<a id="wpr-congratulations-notice" class="wpr-notice-close wpr-icon-close rocket-dismiss" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=rocket_ignore&box=rocket_activation_notice' ), 'rocket_ignore_rocket_activation_notice' ) ); ?>"><span class="screen-reader-text"><?php esc_html_e( 'Dismiss this notice', 'rocket' ); ?></span></a>
 		</div>
 	</div>
 	<?php endif; ?>
@@ -118,28 +128,8 @@ defined( 'ABSPATH' ) || exit;
 					</div>
 				</div>
 			</div>
-			<?php endif; ?>
-			<div class="wpr-fieldsContainer">
-				<fieldset class="wpr-fieldsContainer-fieldset">
-					<div class="wpr-field wpr-field--radio">
-						<div class="wpr-radio">
-							<input type="checkbox" id="analytics_enabled" class="" name="wp_rocket_settings[analytics_enabled]" value="1" <?php checked( get_rocket_option( 'analytics_enabled', 0 ), 1 ); ?>>
-							<label for="analytics_enabled" class="">
-								<span data-l10n-active="On"
-									data-l10n-inactive="Off" class="wpr-radio-ui"></span>
-								<?php esc_html_e( 'Rocket Analytics', 'rocket' ); ?>
-							</label>
-						</div>
-						<div class="wpr-field-description">
-							<?php
-							// translators: %1$s = opening <a> tag, %2$s = closing </a> tag.
-							printf( esc_html__( 'I agree to share anonymous data with the development team to help improve WP Rocket. %1$sWhat info will we collect?%2$s', 'rocket' ), '<button class="wpr-js-popin">', '</button>' );
-							?>
-						</div>
-					</div>
-				</fieldset>
-			</div>
-			<?php
+				<?php
+			endif;
 			/**
 			 * Fires after the account data section on the WP Rocket settings dashboard
 			 *
@@ -150,6 +140,12 @@ defined( 'ABSPATH' ) || exit;
 		</div>
 
 		<div class="wpr-Page-col wpr-Page-col--fixed">
+			<?php
+			/**
+			 * Fires in the dashboard sidebar
+			 */
+			do_action( 'rocket_dashboard_sidebar' );
+			?>
 			<div class="wpr-optionHeader">
 				<h3 class="wpr-title2"><?php esc_html_e( 'Quick Actions', 'rocket' ); ?></h3>
 			</div>
@@ -158,18 +154,19 @@ defined( 'ABSPATH' ) || exit;
 				<fieldset class="wpr-fieldsContainer-fieldset">
 					<?php if ( current_user_can( 'rocket_purge_cache' ) ) : ?>
 					<div class="wpr-field">
-						<h4 class="wpr-title3"><?php esc_html_e( 'Remove all cached files', 'rocket' ); ?></h4>
+						<h4 class="wpr-title3"><?php esc_html_e( 'Cache Files', 'rocket' ); ?></h4>
+						<p><?php echo $rocket_manual_preload ? esc_html__( 'Clear and preload all the cache files.', 'rocket' ) : esc_html__( 'Clear all the cache files.', 'rocket' ); ?></p>
 						<?php
 						$this->render_action_button(
 							'link',
 							'purge_cache',
 							[
-								'label'      => (bool) get_rocket_option( 'manual_preload', false ) ? __( 'Clear and preload cache', 'rocket' ) : __( 'Clear cache', 'rocket' ),
+								'label'      => $rocket_manual_preload ? __( 'Clear and preload', 'rocket' ) : __( 'Clear', 'rocket' ),
 								'parameters' => [
 									'type' => 'all',
 								],
 								'attributes' => [
-									'class' => 'wpr-button wpr-button--icon wpr-button--small wpr-icon-trash',
+									'class' => 'wpr-button wpr-button--icon wpr-button--small wpr-icon-trash wpr-button--no-min-width',
 								],
 							]
 						);

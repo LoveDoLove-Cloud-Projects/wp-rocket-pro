@@ -71,14 +71,6 @@ function rocket_is_plugin_active( $plugin ) {
 	);
 }
 
-$options = (object) [
-	'licence_account'    => 'Infinite',
-	'licence_expiration' => date_i18n(get_option('date_format'), 1893456000),
-	'class'              => 'wpr-isInvalid',
-];
-set_transient('wp_rocket_customer_data', $options, DAY_IN_SECONDS);
-update_rocket_option('secret_key', '123456789');
-
 /**
  * Check whether the plugin is active for the entire network.
  *
@@ -156,7 +148,7 @@ function is_rocket_generate_caching_mobile_files() { // phpcs:ignore WordPress.N
  * return Array An array of domain names to DNS prefetch
  */
 function rocket_get_dns_prefetch_domains() {
-	$domains = (array) get_rocket_option( 'dns_prefetch' );
+	$domains = (array) get_rocket_option( 'dns_prefetch', [] );
 
 	/**
 	 * Filter list of domains to prefetch DNS
@@ -423,7 +415,6 @@ function get_rocket_cache_query_string() { // phpcs:ignore WordPress.NamingConve
  * @return bool true if everything is ok, false otherwise
  */
 function rocket_valid_key() {
-	return true;
 	$rocket_secret_key = (string) get_rocket_option( 'secret_key', '' );
 	if ( ! $rocket_secret_key ) {
 		return false;

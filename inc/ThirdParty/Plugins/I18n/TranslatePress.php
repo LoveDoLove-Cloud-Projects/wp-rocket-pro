@@ -30,6 +30,7 @@ class TranslatePress implements Subscriber_Interface {
 			'rocket_i18n_translated_post_urls'             => [ 'get_translated_post_urls', 10, 4 ],
 			'post_updated'                                 => 'clear_post_languages',
 			'trp_save_editor_translations_regular_strings' => [ 'clear_post_after_updating_translation', 10, 2 ],
+			'rocket_current_url'                           => 'adjust_current_url',
 		];
 	}
 
@@ -121,11 +122,7 @@ class TranslatePress implements Subscriber_Interface {
 	 *
 	 * @return array
 	 */
-	public function get_active_languages_uri( $urls ) {
-		if ( ! is_array( $urls ) ) {
-			$urls = (array) $urls;
-		}
-
+	public function get_active_languages_uri( array $urls ): array {
 		$home_url = home_url();
 
 		$translatepress = TRP_Translate_Press::get_trp_instance();
@@ -148,12 +145,12 @@ class TranslatePress implements Subscriber_Interface {
 	/**
 	 * Gets the active languages slugs
 	 *
-	 * @param Array $codes Array of languages codes.
+	 * @param array $codes Array of languages codes.
 	 *
 	 * @return array
 	 */
 	public function get_active_languages_codes( $codes ) {
-		if ( ! is_array( $codes ) ) {
+		if ( ! is_array( $codes ) ) { // @phpstan-ignore-line
 			$codes = (array) $codes;
 		}
 
@@ -220,7 +217,7 @@ class TranslatePress implements Subscriber_Interface {
 	 * @return array
 	 */
 	public function get_translated_post_urls( $urls, $url, $post_type, $regex ) {
-		if ( ! is_array( $urls ) ) {
+		if ( ! is_array( $urls ) ) { // @phpstan-ignore-line
 			$urls = (array) $urls;
 		}
 
@@ -307,5 +304,21 @@ class TranslatePress implements Subscriber_Interface {
 		}
 
 		rocket_clean_files( $clear_urls );
+	}
+
+	/**
+	 * Adjusts the current URL to match the language-specific URL format used by TranslatePress.
+	 *
+	 * Removes the '#TRPLINKPROCESSED' marker and returns the correct URL for the detected language.
+	 *
+	 * @param string $current_url The current URL to adjust.
+	 * @return string The adjusted URL for the current language.
+	 */
+	public function adjust_current_url( $current_url ) {
+		$translatepress = \TRP_Translate_Press::get_trp_instance();
+		$converter      = $translatepress->get_component( 'url_converter' );
+		$language       = $converter->get_lang_from_url_string( $current_url );
+
+		return str_replace( '#TRPLINKPROCESSED', '', $converter->get_url_for_language( $language, $current_url ) );
 	}
 }

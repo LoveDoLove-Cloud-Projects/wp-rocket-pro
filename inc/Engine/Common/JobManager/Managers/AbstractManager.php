@@ -46,10 +46,11 @@ trait AbstractManager {
 	 *
 	 * @param string $url page URL.
 	 * @param bool   $is_mobile page is for mobile.
+	 * @param array  $additional_details Additional details to be saved into DB.
 	 *
-	 * @return void
+	 * @return bool|void
 	 */
-	public function add_url_to_the_queue( string $url, bool $is_mobile ): void {
+	public function add_url_to_the_queue( string $url, bool $is_mobile, array $additional_details = [] ) {
 		if ( ! $this->is_allowed() ) {
 			return;
 		}
@@ -57,10 +58,9 @@ trait AbstractManager {
 		$row = $this->query->get_row( $url, (bool) $is_mobile );
 
 		if ( empty( $row ) ) {
-			$this->query->create_new_job( $url, '', '', $is_mobile );
-			return;
+			return $this->query->create_new_job( $url, '', '', $is_mobile, $additional_details );
 		}
-		$this->query->reset_job( (int) $row->id );
+		$this->query->reset_job( (int) $row->id, '', $additional_details );
 	}
 
 	/**
@@ -163,7 +163,6 @@ trait AbstractManager {
 		if ( ! $this->is_allowed( $optimization_type ) ) {
 			return;
 		}
-
 		$this->query->make_status_pending( $url, $job_id, $queue_name, $is_mobile );
 	}
 
@@ -190,13 +189,13 @@ trait AbstractManager {
 	 *
 	 * @param string  $url Url from DB row.
 	 * @param boolean $is_mobile Is mobile from DB row.
-	 * @param string  $error_code error code.
+	 * @param int     $error_code error code.
 	 * @param string  $error_message error message.
 	 * @param string  $previous_message Previous saved message.
 	 *
 	 * @return void
 	 */
-	public function update_message( string $url, bool $is_mobile, string $error_code, string $error_message, string $previous_message ): void {
+	public function update_message( string $url, bool $is_mobile, int $error_code, string $error_message, string $previous_message ): void {
 		if ( ! $this->is_allowed() ) {
 			return;
 		}
@@ -219,5 +218,14 @@ trait AbstractManager {
 		}
 
 		$this->query->update_next_retry_time( $url, $is_mobile, $next_retry_time );
+	}
+
+	/**
+	 * Check if we need to allow retry strategies or send job to failed directly based on the feature.
+	 *
+	 * @return bool
+	 */
+	public function allow_retry_strategies() {
+		return true;
 	}
 }
